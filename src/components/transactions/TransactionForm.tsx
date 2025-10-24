@@ -63,8 +63,8 @@ export function TransactionForm({ parties, onSuccess }: TransactionFormProps) {
 
   const calculateGST = (subtotal: string) => {
     const subtotalNum = parseFloat(subtotal) || 0;
-    const cgst = subtotalNum * 0.09; // 9% CGST
-    const sgst = subtotalNum * 0.09; // 9% SGST
+    const cgst = subtotalNum * 0.025; // 2.5% CGST
+    const sgst = subtotalNum * 0.025; // 2.5% SGST
     const total = subtotalNum + cgst + sgst;
 
     setCalculatedValues({
@@ -201,11 +201,11 @@ export function TransactionForm({ parties, onSuccess }: TransactionFormProps) {
         {/* GST Calculation Display */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 glass-card rounded-lg border border-border/50">
           <div>
-            <p className="text-sm text-muted-foreground">CGST (9%)</p>
+            <p className="text-sm text-muted-foreground">CGST (2.5%)</p>
             <p className="text-xl font-semibold text-primary">₹{calculatedValues.cgst}</p>
           </div>
           <div>
-            <p className="text-sm text-muted-foreground">SGST (9%)</p>
+            <p className="text-sm text-muted-foreground">SGST (2.5%)</p>
             <p className="text-xl font-semibold text-primary">₹{calculatedValues.sgst}</p>
           </div>
           <div>

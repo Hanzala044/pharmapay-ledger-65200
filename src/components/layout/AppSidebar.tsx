@@ -10,16 +10,22 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { useAuth } from "@/hooks/useAuth";
 
 const menuItems = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard },
-  { title: "Parties", url: "/parties", icon: Users },
-  { title: "Analytics", url: "/analytics", icon: TrendingUp },
-  { title: "Reports", url: "/reports", icon: FileText },
-  { title: "Settings", url: "/settings", icon: Settings },
+  { title: "Dashboard", url: "/", icon: LayoutDashboard, roles: ['owner', 'manager'] },
+  { title: "Parties", url: "/parties", icon: Users, roles: ['owner', 'manager'] },
+  { title: "Analytics", url: "/analytics", icon: TrendingUp, roles: ['owner'] },
+  { title: "Reports", url: "/reports", icon: FileText, roles: ['owner'] },
+  { title: "Settings", url: "/settings", icon: Settings, roles: ['owner', 'manager'] },
 ];
 
 export function AppSidebar() {
+  const { role } = useAuth();
+  
+  const filteredMenuItems = menuItems.filter(item => 
+    item.roles.includes(role as 'owner' | 'manager')
+  );
   return (
     <Sidebar className="border-r border-border glass-card">
       <SidebarContent>
@@ -39,7 +45,7 @@ export function AppSidebar() {
           <SidebarGroupLabel>Navigation</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {menuItems.map((item) => (
+              {filteredMenuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <NavLink

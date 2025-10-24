@@ -6,6 +6,7 @@ import { DollarSign, TrendingUp, Users, Calendar } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 
 interface DashboardStats {
   todayTotal: number;
@@ -17,6 +18,7 @@ interface DashboardStats {
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const { role } = useAuth();
   const [stats, setStats] = useState<DashboardStats>({
     todayTotal: 0,
     todayCount: 0,
@@ -111,33 +113,35 @@ export default function Dashboard() {
           </p>
         </div>
 
-        {/* Summary Cards */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          <SummaryCard
-            title="Today's Payments"
-            value={`₹${stats.todayTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`}
-            icon={DollarSign}
-            trend={`${stats.todayCount} transactions`}
-            trendUp={stats.todayCount > 0}
-          />
-          <SummaryCard
-            title="This Month"
-            value={`₹${stats.monthTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`}
-            icon={TrendingUp}
-            trend={`${stats.monthCount} transactions`}
-            trendUp={stats.monthCount > 0}
-          />
-          <SummaryCard
-            title="Active Parties Today"
-            value={stats.todayParties.length.toString()}
-            icon={Users}
-          />
-          <SummaryCard
-            title="Date"
-            value={new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-            icon={Calendar}
-          />
-        </div>
+        {/* Summary Cards - Only visible to owners */}
+        {role === 'owner' && (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            <SummaryCard
+              title="Today's Payments"
+              value={`₹${stats.todayTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`}
+              icon={DollarSign}
+              trend={`${stats.todayCount} transactions`}
+              trendUp={stats.todayCount > 0}
+            />
+            <SummaryCard
+              title="This Month"
+              value={`₹${stats.monthTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`}
+              icon={TrendingUp}
+              trend={`${stats.monthCount} transactions`}
+              trendUp={stats.monthCount > 0}
+            />
+            <SummaryCard
+              title="Active Parties Today"
+              value={stats.todayParties.length.toString()}
+              icon={Users}
+            />
+            <SummaryCard
+              title="Date"
+              value={new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+              icon={Calendar}
+            />
+          </div>
+        )}
 
         {/* Today's Parties */}
         <Card className="glass-card border-border/50">
@@ -172,14 +176,18 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent className="flex flex-wrap gap-3">
             <Button onClick={() => navigate("/parties")} className="bg-primary hover:bg-primary/90">
-              Add Transaction
+              {role === 'manager' ? 'Manage Transactions' : 'Add Transaction'}
             </Button>
-            <Button onClick={() => navigate("/analytics")} variant="outline" className="border-border/50">
-              View Analytics
-            </Button>
-            <Button onClick={() => navigate("/reports")} variant="outline" className="border-border/50">
-              Generate Report
-            </Button>
+            {role === 'owner' && (
+              <>
+                <Button onClick={() => navigate("/analytics")} variant="outline" className="border-border/50">
+                  View Analytics
+                </Button>
+                <Button onClick={() => navigate("/reports")} variant="outline" className="border-border/50">
+                  Generate Report
+                </Button>
+              </>
+            )}
           </CardContent>
         </Card>
       </div>

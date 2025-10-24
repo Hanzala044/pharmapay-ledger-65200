@@ -55,6 +55,54 @@ All colors MUST be HSL.
     --sidebar-border: 215 25% 30%;
     --sidebar-ring: 210 95% 58%;
   }
+
+  /* Light theme (cream white) */
+  .light-theme {
+    --background: 40 40% 96%;
+    --foreground: 30 10% 20%;
+
+    --card: 40 30% 98%;
+    --card-foreground: 30 10% 20%;
+
+    --popover: 40 30% 98%;
+    --popover-foreground: 30 10% 20%;
+
+    --primary: 35 85% 55%;
+    --primary-foreground: 40 30% 98%;
+
+    --secondary: 40 20% 92%;
+    --secondary-foreground: 30 10% 20%;
+
+    --muted: 40 20% 92%;
+    --muted-foreground: 30 10% 45%;
+
+    --accent: 35 85% 55%;
+    --accent-foreground: 40 30% 98%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 40 30% 98%;
+
+    --border: 40 20% 85%;
+    --input: 40 20% 85%;
+    --ring: 35 85% 55%;
+
+    --success: 142 76% 36%;
+    --warning: 38 92% 50%;
+
+    /* Glassmorphism for light theme */
+    --glass-background: 40 30% 98% / 0.7;
+    --glass-border: 40 20% 80% / 0.3;
+    
+    /* Sidebar for light theme */
+    --sidebar-background: 40 30% 97%;
+    --sidebar-foreground: 30 10% 20%;
+    --sidebar-primary: 35 85% 55%;
+    --sidebar-primary-foreground: 40 30% 98%;
+    --sidebar-accent: 40 20% 92%;
+    --sidebar-accent-foreground: 30 10% 20%;
+    --sidebar-border: 40 20% 85%;
+    --sidebar-ring: 35 85% 55%;
+  }
 }
 
 @layer base {
@@ -66,13 +114,26 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
     background: linear-gradient(135deg, hsl(215, 28%, 17%) 0%, hsl(217, 30%, 12%) 100%);
     min-height: 100vh;
+    transition: background 0.3s ease, color 0.3s ease;
   }
 
-  /* Glassmorphism utilities */
+  .light-theme body {
+    background: linear-gradient(135deg, hsl(40, 40%, 96%) 0%, hsl(40, 30%, 92%) 100%);
+  }
+
+  /* Enhanced Glassmorphism utilities */
   .glass-card {
     background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(16px);
+    backdrop-filter: blur(20px) saturate(180%);
     border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  }
+
+  .light-theme .glass-card {
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
   }
 
   .glass-card-hover {
@@ -83,6 +144,11 @@ All colors MUST be HSL.
     background: rgba(255, 255, 255, 0.08);
     transform: translateY(-2px);
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  }
+
+  .light-theme .glass-card-hover:hover {
+    background: rgba(255, 255, 255, 0.8);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
   }
 
   /* Smooth animations */
