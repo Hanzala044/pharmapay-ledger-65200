@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { TransactionForm } from "@/components/transactions/TransactionForm";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,7 +17,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Search, Plus } from "lucide-react";
+import { Search, Plus, Edit, Filter } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -24,6 +25,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface Party {
   id: string;
@@ -32,23 +40,30 @@ interface Party {
 
 interface Transaction {
   id: string;
+  party_id: string;
   date: string;
   subtotal: number;
   cgst: number;
   sgst: number;
   total: number;
   payment_type: string;
+  payment_date?: string | null;
+  ptr_number?: string | null;
+  cheque_number?: string | null;
   status: string;
   notes: string | null;
 }
 
 export default function Parties() {
+  const { role } = useAuth();
   const [parties, setParties] = useState<Party[]>([]);
   const [selectedParty, setSelectedParty] = useState<string>("");
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editTransaction, setEditTransaction] = useState<Transaction | undefined>();
 
   useEffect(() => {
     fetchParties();
@@ -117,12 +132,29 @@ export default function Parties() {
     party.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const filteredTransactions = transactions.filter((t) => {
+    if (statusFilter === "all") return true;
+    return t.status.toLowerCase() === statusFilter;
+  });
+
   const selectedPartyName = parties.find((p) => p.id === selectedParty)?.name || "";
-  const totalAmount = transactions.reduce((sum, t) => sum + Number(t.total), 0);
-  const paidAmount = transactions
+  const totalAmount = filteredTransactions.reduce((sum, t) => sum + Number(t.total), 0);
+  const paidAmount = filteredTransactions
     .filter((t) => t.status === "Paid")
     .reduce((sum, t) => sum + Number(t.total), 0);
   const unpaidAmount = totalAmount - paidAmount;
+
+  const handleEditTransaction = (transaction: Transaction) => {
+    setEditTransaction(transaction);
+    setDialogOpen(true);
+  };
+
+  const handleDialogClose = (open: boolean) => {
+    setDialogOpen(open);
+    if (!open) {
+      setEditTransaction(undefined);
+    }
+  };
 
   if (loading) {
     return (
@@ -144,7 +176,7 @@ export default function Parties() {
               Manage transactions for pharmaceutical businesses
             </p>
           </div>
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <Dialog open={dialogOpen} onOpenChange={handleDialogClose}>
             <DialogTrigger asChild>
               <Button className="bg-primary hover:bg-primary/90">
                 <Plus className="mr-2 h-4 w-4" />
@@ -153,12 +185,14 @@ export default function Parties() {
             </DialogTrigger>
             <DialogContent className="glass-card border-border/50 max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>Add New Transaction</DialogTitle>
+                <DialogTitle>{editTransaction ? "Edit Transaction" : "Add New Transaction"}</DialogTitle>
               </DialogHeader>
               <TransactionForm
                 parties={parties}
+                transaction={editTransaction}
                 onSuccess={() => {
                   setDialogOpen(false);
+                  setEditTransaction(undefined);
                   if (selectedParty) fetchTransactions(selectedParty);
                 }}
               />
@@ -200,38 +234,55 @@ export default function Parties() {
 
           {/* Transaction Details */}
           <div className="lg:col-span-3 space-y-6">
-            {/* Summary Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Card className="glass-card border-border/50">
-                <CardContent className="p-6">
-                  <p className="text-sm text-muted-foreground">Total Amount</p>
-                  <p className="text-2xl font-bold text-foreground mt-2">
-                    ₹{totalAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-                  </p>
-                </CardContent>
-              </Card>
-              <Card className="glass-card border-green-500/30 border">
-                <CardContent className="p-6">
-                  <p className="text-sm text-muted-foreground">Paid</p>
-                  <p className="text-2xl font-bold text-green-500 mt-2">
-                    ₹{paidAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-                  </p>
-                </CardContent>
-              </Card>
-              <Card className="glass-card border-destructive/30 border">
-                <CardContent className="p-6">
-                  <p className="text-sm text-muted-foreground">Unpaid</p>
-                  <p className="text-2xl font-bold text-destructive mt-2">
-                    ₹{unpaidAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
+            {/* Summary Cards - Only for Owner */}
+            {role === "owner" && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Card className="glass-card border-border/50">
+                  <CardContent className="p-6">
+                    <p className="text-sm text-muted-foreground">Total Amount</p>
+                    <p className="text-2xl font-bold text-foreground mt-2">
+                      ₹{totalAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card className="glass-card border-green-500/30 border">
+                  <CardContent className="p-6">
+                    <p className="text-sm text-muted-foreground">Paid</p>
+                    <p className="text-2xl font-bold text-green-500 mt-2">
+                      ₹{paidAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card className="glass-card border-destructive/30 border">
+                  <CardContent className="p-6">
+                    <p className="text-sm text-muted-foreground">Unpaid</p>
+                    <p className="text-2xl font-bold text-destructive mt-2">
+                      ₹{unpaidAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
 
             {/* Transactions Table */}
             <Card className="glass-card border-border/50">
               <CardHeader>
-                <CardTitle>{selectedPartyName} - Transaction History</CardTitle>
+                <div className="flex justify-between items-center">
+                  <CardTitle>{selectedPartyName} - Transaction History</CardTitle>
+                  <div className="flex items-center gap-2">
+                    <Filter className="h-4 w-4 text-muted-foreground" />
+                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                      <SelectTrigger className="w-[150px] glass-card border-border/50">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="glass-card border-border/50 bg-card">
+                        <SelectItem value="all">All Status</SelectItem>
+                        <SelectItem value="paid">Paid</SelectItem>
+                        <SelectItem value="unpaid">Unpaid</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="overflow-x-auto">
@@ -244,13 +295,15 @@ export default function Parties() {
                         <TableHead>SGST</TableHead>
                         <TableHead>Total</TableHead>
                         <TableHead>Type</TableHead>
+                        <TableHead>Payment Details</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead>Notes</TableHead>
+                        <TableHead>Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {transactions.length > 0 ? (
-                        transactions.map((transaction) => (
+                      {filteredTransactions.length > 0 ? (
+                        filteredTransactions.map((transaction) => (
                           <TableRow key={transaction.id} className="border-border/50">
                             <TableCell>
                               {new Date(transaction.date).toLocaleDateString("en-IN")}
@@ -273,13 +326,31 @@ export default function Parties() {
                               </Badge>
                             </TableCell>
                             <TableCell>
+                              <div className="text-xs space-y-1">
+                                {transaction.payment_date && (
+                                  <p className="text-muted-foreground">
+                                    Date: {new Date(transaction.payment_date).toLocaleDateString("en-IN")}
+                                  </p>
+                                )}
+                                {transaction.ptr_number && (
+                                  <p className="text-muted-foreground">PTR: {transaction.ptr_number}</p>
+                                )}
+                                {transaction.cheque_number && (
+                                  <p className="text-muted-foreground">Cheque: {transaction.cheque_number}</p>
+                                )}
+                                {!transaction.payment_date && !transaction.ptr_number && !transaction.cheque_number && "-"}
+                              </div>
+                            </TableCell>
+                            <TableCell>
                               <div className="flex items-center gap-2">
-                                <Switch
-                                  checked={transaction.status === "Paid"}
-                                  onCheckedChange={() =>
-                                    togglePaymentStatus(transaction.id, transaction.status)
-                                  }
-                                />
+                                {role === "owner" && (
+                                  <Switch
+                                    checked={transaction.status === "Paid"}
+                                    onCheckedChange={() =>
+                                      togglePaymentStatus(transaction.id, transaction.status)
+                                    }
+                                  />
+                                )}
                                 <Badge
                                   variant={transaction.status === "Paid" ? "default" : "destructive"}
                                   className={
@@ -295,12 +366,22 @@ export default function Parties() {
                             <TableCell className="max-w-xs truncate">
                               {transaction.notes || "-"}
                             </TableCell>
+                            <TableCell>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEditTransaction(transaction)}
+                                className="hover:bg-primary/10"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                            </TableCell>
                           </TableRow>
                         ))
                       ) : (
                         <TableRow>
-                          <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
-                            No transactions yet
+                          <TableCell colSpan={10} className="text-center text-muted-foreground py-8">
+                            No transactions found
                           </TableCell>
                         </TableRow>
                       )}

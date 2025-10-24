@@ -53,12 +53,15 @@ export type Database = {
       transactions: {
         Row: {
           cgst: number
+          cheque_number: string | null
           created_at: string
           date: string
           id: string
           notes: string | null
           party_id: string
+          payment_date: string | null
           payment_type: string
+          ptr_number: string | null
           sgst: number
           status: string
           subtotal: number
@@ -66,12 +69,15 @@ export type Database = {
         }
         Insert: {
           cgst: number
+          cheque_number?: string | null
           created_at?: string
           date?: string
           id?: string
           notes?: string | null
           party_id: string
+          payment_date?: string | null
           payment_type: string
+          ptr_number?: string | null
           sgst: number
           status?: string
           subtotal: number
@@ -79,12 +85,15 @@ export type Database = {
         }
         Update: {
           cgst?: number
+          cheque_number?: string | null
           created_at?: string
           date?: string
           id?: string
           notes?: string | null
           party_id?: string
+          payment_date?: string | null
           payment_type?: string
+          ptr_number?: string | null
           sgst?: number
           status?: string
           subtotal?: number

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -22,13 +22,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plus } from "lucide-react";
+import { Plus, Save } from "lucide-react";
 
 const formSchema = z.object({
   party_id: z.string().min(1, "Please select a party"),
   date: z.string().min(1, "Date is required"),
   subtotal: z.string().min(1, "Subtotal is required"),
-  payment_type: z.enum(["Cash", "UPI", "Bank"]),
+  payment_type: z.enum(["Cash", "UPI", "Bank", "Cheque"]),
+  payment_date: z.string().optional(),
+  ptr_number: z.string().optional(),
+  cheque_number: z.string().optional(),
   notes: z.string().optional(),
 });
 
@@ -37,12 +40,28 @@ interface Party {
   name: string;
 }
 
+interface Transaction {
+  id: string;
+  party_id: string;
+  date: string;
+  subtotal: number;
+  cgst: number;
+  sgst: number;
+  total: number;
+  payment_type: string;
+  payment_date?: string | null;
+  ptr_number?: string | null;
+  cheque_number?: string | null;
+  notes: string | null;
+}
+
 interface TransactionFormProps {
   parties: Party[];
+  transaction?: Transaction;
   onSuccess?: () => void;
 }
 
-export function TransactionForm({ parties, onSuccess }: TransactionFormProps) {
+export function TransactionForm({ parties, transaction, onSuccess }: TransactionFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [calculatedValues, setCalculatedValues] = useState({
     cgst: "0.00",
@@ -53,13 +72,24 @@ export function TransactionForm({ parties, onSuccess }: TransactionFormProps) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      party_id: "",
-      date: new Date().toISOString().split("T")[0],
-      subtotal: "",
-      payment_type: "Cash",
-      notes: "",
+      party_id: transaction?.party_id || "",
+      date: transaction?.date || new Date().toISOString().split("T")[0],
+      subtotal: transaction?.subtotal.toString() || "",
+      payment_type: (transaction?.payment_type as "Cash" | "UPI" | "Bank" | "Cheque") || "Cash",
+      payment_date: transaction?.payment_date || "",
+      ptr_number: transaction?.ptr_number || "",
+      cheque_number: transaction?.cheque_number || "",
+      notes: transaction?.notes || "",
     },
   });
+
+  const paymentType = form.watch("payment_type");
+
+  useEffect(() => {
+    if (transaction) {
+      calculateGST(transaction.subtotal.toString());
+    }
+  }, [transaction]);
 
   const calculateGST = (subtotal: string) => {
     const subtotalNum = parseFloat(subtotal) || 0;
@@ -82,7 +112,7 @@ export function TransactionForm({ parties, onSuccess }: TransactionFormProps) {
       const sgst = parseFloat(calculatedValues.sgst);
       const total = parseFloat(calculatedValues.total);
 
-      const { error } = await supabase.from("transactions").insert({
+      const transactionData = {
         party_id: values.party_id,
         date: values.date,
         subtotal,
@@ -90,18 +120,35 @@ export function TransactionForm({ parties, onSuccess }: TransactionFormProps) {
         sgst,
         total,
         payment_type: values.payment_type,
-        status: "Unpaid",
+        payment_date: values.payment_date || null,
+        ptr_number: values.payment_type === "UPI" ? values.ptr_number || null : null,
+        cheque_number: values.payment_type === "Cheque" ? values.cheque_number || null : null,
         notes: values.notes || null,
-      });
+      };
 
-      if (error) throw error;
+      if (transaction) {
+        const { error } = await supabase
+          .from("transactions")
+          .update(transactionData)
+          .eq("id", transaction.id);
 
-      toast.success("Transaction added successfully!");
+        if (error) throw error;
+        toast.success("Transaction updated successfully!");
+      } else {
+        const { error } = await supabase.from("transactions").insert({
+          ...transactionData,
+          status: "Unpaid",
+        });
+
+        if (error) throw error;
+        toast.success("Transaction added successfully!");
+      }
+
       form.reset();
       setCalculatedValues({ cgst: "0.00", sgst: "0.00", total: "0.00" });
       onSuccess?.();
     } catch (error: any) {
-      toast.error("Failed to add transaction: " + error.message);
+      toast.error(`Failed to ${transaction ? "update" : "add"} transaction: ` + error.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -190,13 +237,69 @@ export function TransactionForm({ parties, onSuccess }: TransactionFormProps) {
                     <SelectItem value="Cash">Cash</SelectItem>
                     <SelectItem value="UPI">UPI</SelectItem>
                     <SelectItem value="Bank">Bank</SelectItem>
+                    <SelectItem value="Cheque">Cheque</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />
               </FormItem>
             )}
           />
+
+          <FormField
+            control={form.control}
+            name="payment_date"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Payment Date</FormLabel>
+                <FormControl>
+                  <Input type="date" className="glass-card border-border/50" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </div>
+
+        {/* Conditional Fields Based on Payment Type */}
+        {paymentType === "UPI" && (
+          <FormField
+            control={form.control}
+            name="ptr_number"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>PTR Number</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="Enter PTR number"
+                    className="glass-card border-border/50"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
+
+        {paymentType === "Cheque" && (
+          <FormField
+            control={form.control}
+            name="cheque_number"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Cheque Number</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="Enter cheque number"
+                    className="glass-card border-border/50"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
 
         {/* GST Calculation Display */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 glass-card rounded-lg border border-border/50">
@@ -237,8 +340,17 @@ export function TransactionForm({ parties, onSuccess }: TransactionFormProps) {
           disabled={isSubmitting}
           className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
         >
-          <Plus className="mr-2 h-4 w-4" />
-          {isSubmitting ? "Adding..." : "Add Transaction"}
+          {transaction ? (
+            <>
+              <Save className="mr-2 h-4 w-4" />
+              {isSubmitting ? "Updating..." : "Update Transaction"}
+            </>
+          ) : (
+            <>
+              <Plus className="mr-2 h-4 w-4" />
+              {isSubmitting ? "Adding..." : "Add Transaction"}
+            </>
+          )}
         </Button>
       </form>
     </Form>
