@@ -32,6 +32,7 @@ const formSchema = z.object({
   payment_date: z.string().optional(),
   ptr_number: z.string().optional(),
   cheque_number: z.string().optional(),
+  invoice_number: z.string().optional(),
   notes: z.string().optional(),
 });
 
@@ -52,6 +53,7 @@ interface Transaction {
   payment_date?: string | null;
   ptr_number?: string | null;
   cheque_number?: string | null;
+  invoice_number?: string | null;
   notes: string | null;
 }
 
@@ -79,6 +81,7 @@ export function TransactionForm({ parties, transaction, onSuccess }: Transaction
       payment_date: transaction?.payment_date || "",
       ptr_number: transaction?.ptr_number || "",
       cheque_number: transaction?.cheque_number || "",
+      invoice_number: transaction?.invoice_number || "",
       notes: transaction?.notes || "",
     },
   });
@@ -123,6 +126,7 @@ export function TransactionForm({ parties, transaction, onSuccess }: Transaction
         payment_date: values.payment_date || null,
         ptr_number: values.payment_type === "UPI" ? values.ptr_number || null : null,
         cheque_number: values.payment_type === "Cheque" ? values.cheque_number || null : null,
+        invoice_number: values.invoice_number || null,
         notes: values.notes || null,
       };
 
@@ -316,6 +320,24 @@ export function TransactionForm({ parties, transaction, onSuccess }: Transaction
             <p className="text-2xl font-bold text-foreground">₹{calculatedValues.total}</p>
           </div>
         </div>
+
+        <FormField
+          control={form.control}
+          name="invoice_number"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Invoice Number (Optional)</FormLabel>
+              <FormControl>
+                <Input
+                  placeholder="INV-001"
+                  className="glass-card border-border/50"
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         <FormField
           control={form.control}
