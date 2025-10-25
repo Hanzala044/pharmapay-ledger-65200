@@ -6,8 +6,9 @@ import { SummaryCard } from "@/components/dashboard/SummaryCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { DollarSign, TrendingUp, TrendingDown, AlertCircle, CheckCircle2, Calendar, Users, Receipt } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DollarSign, TrendingUp, TrendingDown, AlertCircle, CheckCircle2, Calendar, Users, Receipt, Activity, Target, Percent, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, LineChart, Line, AreaChart, Area } from "recharts";
 
 interface DashboardStats {
   todayTotal: number;
@@ -187,62 +188,148 @@ export default function Dashboard() {
     );
   }
 
+  const todayGrowth = stats.todayTotal > 0 && stats.monthTotal > 0 
+    ? ((stats.todayTotal / (stats.monthTotal / 30)) - 1) * 100 
+    : 0;
+
   return (
     <AppLayout>
-      <div className="space-y-6 animate-fade-in">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
-          <p className="text-muted-foreground mt-1">
-            {role === "owner" 
-              ? "Complete overview of pharmaceutical payment analytics" 
-              : "Today's transaction activity and performance"}
-          </p>
+      <div className="space-y-6 animate-fade-in pb-8">
+        {/* Header with gradient */}
+        <div className="relative overflow-hidden rounded-lg bg-gradient-to-r from-primary/10 via-primary/5 to-background p-6 border border-border/50">
+          <div className="relative z-10">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+                  Dashboard
+                </h2>
+                <p className="text-muted-foreground mt-2 flex items-center gap-2">
+                  <Activity className="h-4 w-4" />
+                  {role === "owner" 
+                    ? "Complete analytics and financial insights" 
+                    : "Today's transaction activity and performance"}
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-sm text-muted-foreground">Current Date</p>
+                <p className="text-lg font-semibold">{new Date().toLocaleDateString("en-IN", { 
+                  day: '2-digit', 
+                  month: 'short', 
+                  year: 'numeric' 
+                })}</p>
+              </div>
+            </div>
+          </div>
+          <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -z-0"></div>
         </div>
 
-        {/* Today's Summary */}
+        {/* Enhanced Summary Cards */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <SummaryCard
-            title="Today's Transactions"
-            value={stats.todayCount.toString()}
-            icon={Receipt}
-            className="bg-gradient-to-br from-blue-500/10 to-blue-600/5"
-          />
-          <SummaryCard
-            title="Today's Total"
-            value={`₹${(stats.todayTotal / 1000).toFixed(1)}K`}
-            icon={DollarSign}
-            className="bg-gradient-to-br from-purple-500/10 to-purple-600/5"
-          />
+          <Card className="glass-card border-border/50 overflow-hidden relative group hover:shadow-lg transition-all duration-300">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent"></div>
+            <CardContent className="p-6 relative z-10">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm font-medium text-muted-foreground">Today's Transactions</p>
+                <Receipt className="h-5 w-5 text-blue-500" />
+              </div>
+              <div className="space-y-1">
+                <p className="text-3xl font-bold">{stats.todayCount}</p>
+                <div className="flex items-center text-xs text-muted-foreground">
+                  <Target className="h-3 w-3 mr-1" />
+                  <span>Total entries</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="glass-card border-border/50 overflow-hidden relative group hover:shadow-lg transition-all duration-300">
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-transparent"></div>
+            <CardContent className="p-6 relative z-10">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm font-medium text-muted-foreground">Today's Revenue</p>
+                <DollarSign className="h-5 w-5 text-purple-500" />
+              </div>
+              <div className="space-y-1">
+                <p className="text-3xl font-bold">₹{(stats.todayTotal / 1000).toFixed(1)}K</p>
+                <div className="flex items-center text-xs">
+                  {todayGrowth >= 0 ? (
+                    <>
+                      <ArrowUpRight className="h-3 w-3 text-green-500 mr-1" />
+                      <span className="text-green-500">+{todayGrowth.toFixed(1)}%</span>
+                    </>
+                  ) : (
+                    <>
+                      <ArrowDownRight className="h-3 w-3 text-red-500 mr-1" />
+                      <span className="text-red-500">{todayGrowth.toFixed(1)}%</span>
+                    </>
+                  )}
+                  <span className="text-muted-foreground ml-1">vs avg</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           {role === "owner" && (
             <>
-              <SummaryCard
-                title="Today's Paid"
-                value={`₹${(stats.todayPaid / 1000).toFixed(1)}K`}
-                icon={TrendingUp}
-                className="bg-gradient-to-br from-green-500/10 to-green-600/5"
-              />
-              <SummaryCard
-                title="Today's Pending"
-                value={`₹${(stats.todayUnpaid / 1000).toFixed(1)}K`}
-                icon={TrendingDown}
-                className="bg-gradient-to-br from-red-500/10 to-red-600/5"
-              />
+              <Card className="glass-card border-border/50 overflow-hidden relative group hover:shadow-lg transition-all duration-300">
+                <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-transparent"></div>
+                <CardContent className="p-6 relative z-10">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-sm font-medium text-muted-foreground">Collection Rate</p>
+                    <Percent className="h-5 w-5 text-green-500" />
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-3xl font-bold">{todayPaymentRate.toFixed(0)}%</p>
+                    <Progress value={todayPaymentRate} className="h-2" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="glass-card border-border/50 overflow-hidden relative group hover:shadow-lg transition-all duration-300">
+                <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-transparent"></div>
+                <CardContent className="p-6 relative z-10">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-sm font-medium text-muted-foreground">Pending Amount</p>
+                    <AlertCircle className="h-5 w-5 text-amber-500" />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-3xl font-bold">₹{(stats.todayUnpaid / 1000).toFixed(1)}K</p>
+                    <p className="text-xs text-muted-foreground">Needs collection</p>
+                  </div>
+                </CardContent>
+              </Card>
             </>
           )}
+
           {role === "manager" && (
             <>
-              <SummaryCard
-                title="Active Parties"
-                value={stats.todayParties.length.toString()}
-                icon={Users}
-                className="bg-gradient-to-br from-green-500/10 to-green-600/5"
-              />
-              <SummaryCard
-                title="This Month"
-                value={stats.monthCount.toString()}
-                icon={Calendar}
-                className="bg-gradient-to-br from-orange-500/10 to-orange-600/5"
-              />
+              <Card className="glass-card border-border/50 overflow-hidden relative group hover:shadow-lg transition-all duration-300">
+                <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-transparent"></div>
+                <CardContent className="p-6 relative z-10">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-sm font-medium text-muted-foreground">Active Parties</p>
+                    <Users className="h-5 w-5 text-green-500" />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-3xl font-bold">{stats.todayParties.length}</p>
+                    <p className="text-xs text-muted-foreground">Engaged today</p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="glass-card border-border/50 overflow-hidden relative group hover:shadow-lg transition-all duration-300">
+                <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-transparent"></div>
+                <CardContent className="p-6 relative z-10">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-sm font-medium text-muted-foreground">Month Total</p>
+                    <Calendar className="h-5 w-5 text-orange-500" />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-3xl font-bold">{stats.monthCount}</p>
+                    <p className="text-xs text-muted-foreground">Transactions</p>
+                  </div>
+                </CardContent>
+              </Card>
             </>
           )}
         </div>
@@ -250,166 +337,253 @@ export default function Dashboard() {
         {/* Owner-Only Financial Overview */}
         {role === "owner" && (
           <>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <SummaryCard
-                title="Month's Total"
-                value={`₹${(stats.monthTotal / 1000).toFixed(1)}K`}
-                icon={DollarSign}
-                className="bg-gradient-to-br from-cyan-500/10 to-cyan-600/5"
-              />
-              <SummaryCard
-                title="Month's Paid"
-                value={`₹${(stats.monthPaid / 1000).toFixed(1)}K`}
-                icon={CheckCircle2}
-                className="bg-gradient-to-br from-emerald-500/10 to-emerald-600/5"
-              />
-              <SummaryCard
-                title="Month's Pending"
-                value={`₹${(stats.monthUnpaid / 1000).toFixed(1)}K`}
-                icon={AlertCircle}
-                className="bg-gradient-to-br from-amber-500/10 to-amber-600/5"
-              />
-              <Card className="glass-card border-border/50 bg-gradient-to-br from-indigo-500/10 to-indigo-600/5">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Collection Rate</p>
-                      <p className="text-2xl font-bold text-foreground mt-2">{monthPaymentRate.toFixed(1)}%</p>
-                    </div>
-                    <TrendingUp className="h-8 w-8 text-primary" />
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+            <Tabs defaultValue="overview" className="space-y-4">
+              <TabsList className="glass-card">
+                <TabsTrigger value="overview">Overview</TabsTrigger>
+                <TabsTrigger value="analytics">Analytics</TabsTrigger>
+                <TabsTrigger value="performance">Performance</TabsTrigger>
+              </TabsList>
 
-            {/* Charts Row */}
-            <div className="grid gap-4 md:grid-cols-2">
-              {/* Monthly Trend Chart */}
-              <Card className="glass-card border-border/50">
-                <CardHeader>
-                  <CardTitle>6-Month Payment Trend</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={stats.monthlyData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                      <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" />
-                      <YAxis stroke="hsl(var(--muted-foreground))" />
-                      <Tooltip 
-                        contentStyle={{ 
-                          backgroundColor: 'hsl(var(--background))', 
-                          border: '1px solid hsl(var(--border))',
-                          borderRadius: '8px'
-                        }}
-                      />
-                      <Legend />
-                      <Bar dataKey="paid" name="Paid (₹K)" fill="hsl(142 76% 36%)" radius={[8, 8, 0, 0]} />
-                      <Bar dataKey="unpaid" name="Unpaid (₹K)" fill="hsl(0 84% 60%)" radius={[8, 8, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
-
-              {/* Payment Type Distribution */}
-              <Card className="glass-card border-border/50">
-                <CardHeader>
-                  <CardTitle>Payment Methods</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <PieChart>
-                      <Pie
-                        data={stats.paymentTypeData}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                        outerRadius={100}
-                        fill="#8884d8"
-                        dataKey="value"
-                      >
-                        {stats.paymentTypeData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip 
-                        contentStyle={{ 
-                          backgroundColor: 'hsl(var(--background))', 
-                          border: '1px solid hsl(var(--border))',
-                          borderRadius: '8px'
-                        }}
-                        formatter={(value: number) => `₹${value.toLocaleString("en-IN")}`}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Top Parties */}
-            <Card className="glass-card border-border/50">
-              <CardHeader>
-                <CardTitle>Top Parties (This Month)</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {stats.topParties.map((party, idx) => (
-                    <div key={idx} className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-sm font-bold">
-                          {idx + 1}
-                        </div>
-                        <span className="font-medium">{party.name}</span>
+              <TabsContent value="overview" className="space-y-4">
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                  <Card className="glass-card border-border/50 overflow-hidden relative">
+                    <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-transparent"></div>
+                    <CardContent className="p-6 relative z-10">
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-sm font-medium text-muted-foreground">Month's Revenue</p>
+                        <DollarSign className="h-5 w-5 text-cyan-500" />
                       </div>
-                      <span className="text-lg font-bold text-primary">
-                        ₹{party.total.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-                      </span>
-                    </div>
-                  ))}
+                      <p className="text-3xl font-bold">₹{(stats.monthTotal / 1000).toFixed(1)}K</p>
+                      <p className="text-xs text-muted-foreground mt-1">{stats.monthCount} transactions</p>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="glass-card border-border/50 overflow-hidden relative">
+                    <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent"></div>
+                    <CardContent className="p-6 relative z-10">
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-sm font-medium text-muted-foreground">Collected</p>
+                        <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+                      </div>
+                      <p className="text-3xl font-bold text-emerald-500">₹{(stats.monthPaid / 1000).toFixed(1)}K</p>
+                      <p className="text-xs text-muted-foreground mt-1">{monthPaymentRate.toFixed(0)}% collection rate</p>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="glass-card border-border/50 overflow-hidden relative">
+                    <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-transparent"></div>
+                    <CardContent className="p-6 relative z-10">
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-sm font-medium text-muted-foreground">Outstanding</p>
+                        <AlertCircle className="h-5 w-5 text-amber-500" />
+                      </div>
+                      <p className="text-3xl font-bold text-amber-500">₹{(stats.monthUnpaid / 1000).toFixed(1)}K</p>
+                      <p className="text-xs text-muted-foreground mt-1">Pending collection</p>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="glass-card border-border/50 overflow-hidden relative">
+                    <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-transparent"></div>
+                    <CardContent className="p-6 relative z-10">
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-sm font-medium text-muted-foreground">Efficiency</p>
+                        <TrendingUp className="h-5 w-5 text-indigo-500" />
+                      </div>
+                      <div className="space-y-2">
+                        <p className="text-3xl font-bold">{monthPaymentRate.toFixed(0)}%</p>
+                        <Progress value={monthPaymentRate} className="h-2" />
+                      </div>
+                    </CardContent>
+                  </Card>
                 </div>
-              </CardContent>
-            </Card>
 
-            {/* Payment Progress */}
-            <div className="grid gap-4 md:grid-cols-2">
-              <Card className="glass-card border-border/50">
-                <CardHeader>
-                  <CardTitle className="text-lg">Today's Collection Progress</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Payment Rate</span>
-                      <span className="font-semibold">{todayPaymentRate.toFixed(1)}%</span>
-                    </div>
-                    <Progress value={todayPaymentRate} className="h-3" />
-                    <p className="text-xs text-muted-foreground mt-2">
-                      ₹{stats.todayPaid.toLocaleString("en-IN", { minimumFractionDigits: 2 })} of ₹
-                      {stats.todayTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })} collected
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
+                {/* Enhanced Charts Row */}
+                <div className="grid gap-4 md:grid-cols-2">
+                  {/* Revenue Trend with Area Chart */}
+                  <Card className="glass-card border-border/50">
+                    <CardHeader>
+                      <CardTitle className="flex items-center justify-between">
+                        <span>6-Month Revenue Trend</span>
+                        <Activity className="h-4 w-4 text-muted-foreground" />
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ResponsiveContainer width="100%" height={300}>
+                        <AreaChart data={stats.monthlyData}>
+                          <defs>
+                            <linearGradient id="colorPaid" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="hsl(142 76% 36%)" stopOpacity={0.3}/>
+                              <stop offset="95%" stopColor="hsl(142 76% 36%)" stopOpacity={0}/>
+                            </linearGradient>
+                            <linearGradient id="colorUnpaid" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="hsl(0 84% 60%)" stopOpacity={0.3}/>
+                              <stop offset="95%" stopColor="hsl(0 84% 60%)" stopOpacity={0}/>
+                            </linearGradient>
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
+                          <XAxis 
+                            dataKey="month" 
+                            stroke="hsl(var(--muted-foreground))" 
+                            fontSize={12}
+                          />
+                          <YAxis 
+                            stroke="hsl(var(--muted-foreground))" 
+                            fontSize={12}
+                            tickFormatter={(value) => `₹${value}K`}
+                          />
+                          <Tooltip 
+                            contentStyle={{ 
+                              backgroundColor: 'hsl(var(--background))', 
+                              border: '1px solid hsl(var(--border))',
+                              borderRadius: '8px',
+                              boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                            }}
+                            formatter={(value: number) => [`₹${value.toFixed(1)}K`, '']}
+                          />
+                          <Area 
+                            type="monotone" 
+                            dataKey="paid" 
+                            name="Collected" 
+                            stroke="hsl(142 76% 36%)" 
+                            fillOpacity={1}
+                            fill="url(#colorPaid)"
+                            strokeWidth={2}
+                          />
+                          <Area 
+                            type="monotone" 
+                            dataKey="unpaid" 
+                            name="Pending" 
+                            stroke="hsl(0 84% 60%)" 
+                            fillOpacity={1}
+                            fill="url(#colorUnpaid)"
+                            strokeWidth={2}
+                          />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </CardContent>
+                  </Card>
 
-              <Card className="glass-card border-border/50">
-                <CardHeader>
-                  <CardTitle className="text-lg">Monthly Collection Progress</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Payment Rate</span>
-                      <span className="font-semibold">{monthPaymentRate.toFixed(1)}%</span>
+                  {/* Payment Methods with Enhanced Pie */}
+                  <Card className="glass-card border-border/50">
+                    <CardHeader>
+                      <CardTitle className="flex items-center justify-between">
+                        <span>Payment Distribution</span>
+                        <Target className="h-4 w-4 text-muted-foreground" />
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ResponsiveContainer width="100%" height={300}>
+                        <PieChart>
+                          <Pie
+                            data={stats.paymentTypeData}
+                            cx="50%"
+                            cy="50%"
+                            labelLine={false}
+                            label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                            outerRadius={100}
+                            fill="#8884d8"
+                            dataKey="value"
+                            strokeWidth={2}
+                          >
+                            {stats.paymentTypeData.map((entry, index) => (
+                              <Cell 
+                                key={`cell-${index}`} 
+                                fill={COLORS[index % COLORS.length]}
+                                stroke="hsl(var(--background))"
+                              />
+                            ))}
+                          </Pie>
+                          <Tooltip 
+                            contentStyle={{ 
+                              backgroundColor: 'hsl(var(--background))', 
+                              border: '1px solid hsl(var(--border))',
+                              borderRadius: '8px',
+                              boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                            }}
+                            formatter={(value: number) => `₹${value.toLocaleString("en-IN")}`}
+                          />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </CardContent>
+                  </Card>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="analytics" className="space-y-4">
+                {/* Top Parties */}
+                <Card className="glass-card border-border/50">
+                  <CardHeader>
+                    <CardTitle>Top Parties (This Month)</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {stats.topParties.map((party, idx) => (
+                        <div key={idx} className="flex items-center justify-between p-3 rounded-lg glass-card border-border/50 hover:bg-accent/5 transition-colors">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center text-sm font-bold">
+                              {idx + 1}
+                            </div>
+                            <span className="font-medium">{party.name}</span>
+                          </div>
+                          <span className="text-lg font-bold text-primary">
+                            ₹{party.total.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                          </span>
+                        </div>
+                      ))}
                     </div>
-                    <Progress value={monthPaymentRate} className="h-3" />
-                    <p className="text-xs text-muted-foreground mt-2">
-                      ₹{stats.monthPaid.toLocaleString("en-IN", { minimumFractionDigits: 2 })} of ₹
-                      {stats.monthTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })} collected
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="performance" className="space-y-4">
+                {/* Payment Progress */}
+                <div className="grid gap-4 md:grid-cols-2">
+                  <Card className="glass-card border-border/50">
+                    <CardHeader>
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <Target className="h-5 w-5 text-primary" />
+                        Today's Collection Progress
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Payment Rate</span>
+                          <span className="font-semibold text-lg">{todayPaymentRate.toFixed(1)}%</span>
+                        </div>
+                        <Progress value={todayPaymentRate} className="h-3" />
+                        <p className="text-xs text-muted-foreground mt-2">
+                          ₹{stats.todayPaid.toLocaleString("en-IN", { minimumFractionDigits: 2 })} of ₹
+                          {stats.todayTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })} collected
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="glass-card border-border/50">
+                    <CardHeader>
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <TrendingUp className="h-5 w-5 text-emerald-500" />
+                        Monthly Collection Progress
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Payment Rate</span>
+                          <span className="font-semibold text-lg">{monthPaymentRate.toFixed(1)}%</span>
+                        </div>
+                        <Progress value={monthPaymentRate} className="h-3" />
+                        <p className="text-xs text-muted-foreground mt-2">
+                          ₹{stats.monthPaid.toLocaleString("en-IN", { minimumFractionDigits: 2 })} of ₹
+                          {stats.monthTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })} collected
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </TabsContent>
+            </Tabs>
           </>
         )}
 

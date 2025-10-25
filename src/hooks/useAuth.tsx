@@ -87,29 +87,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (username: string, password: string) => {
     try {
-      // Map username to email
-      const emailMap: { [key: string]: string } = {
-        'mohd_hanif': 'owner@pharmapay.local',
-        'manager': 'manager@pharmapay.local'
-      };
-
-      const email = emailMap[username];
-      if (!email) {
-        return { error: 'Invalid username or password' };
-      }
-
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      const { data, error } = await supabase.functions.invoke('auth-login', {
+        body: { username, password }
       });
 
       if (error) {
-        return { error: 'Invalid username or password' };
+        return { error: error.message || 'Invalid username or password' };
+      }
+
+      if (data.error) {
+        return { error: data.error };
+      }
+
+      // Set the session from the edge function response
+      if (data.session) {
+        await supabase.auth.setSession(data.session);
       }
 
       return {};
     } catch (error: any) {
-      return { error: error.message };
+      return { error: error.message || 'An error occurred during sign in' };
     }
   };
 
