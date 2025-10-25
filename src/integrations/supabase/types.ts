@@ -14,140 +14,16 @@ export type Database = {
   }
   public: {
     Tables: {
-      parties: {
-        Row: {
-          created_at: string
-          id: string
-          name: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          name: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          name?: string
-        }
-        Relationships: []
-      }
-      profiles: {
-        Row: {
-          created_at: string | null
-          id: string
-          username: string
-        }
-        Insert: {
-          created_at?: string | null
-          id: string
-          username: string
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          username?: string
-        }
-        Relationships: []
-      }
-      transactions: {
-        Row: {
-          cgst: number
-          cheque_number: string | null
-          created_at: string
-          date: string
-          id: string
-          invoice_number: string | null
-          notes: string | null
-          party_id: string
-          payment_date: string | null
-          payment_type: string
-          ptr_number: string | null
-          sgst: number
-          status: string
-          subtotal: number
-          total: number
-        }
-        Insert: {
-          cgst: number
-          cheque_number?: string | null
-          created_at?: string
-          date?: string
-          id?: string
-          invoice_number?: string | null
-          notes?: string | null
-          party_id: string
-          payment_date?: string | null
-          payment_type: string
-          ptr_number?: string | null
-          sgst: number
-          status?: string
-          subtotal: number
-          total: number
-        }
-        Update: {
-          cgst?: number
-          cheque_number?: string | null
-          created_at?: string
-          date?: string
-          id?: string
-          invoice_number?: string | null
-          notes?: string | null
-          party_id?: string
-          payment_date?: string | null
-          payment_type?: string
-          ptr_number?: string | null
-          sgst?: number
-          status?: string
-          subtotal?: number
-          total?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "transactions_party_id_fkey"
-            columns: ["party_id"]
-            isOneToOne: false
-            referencedRelation: "parties"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      user_roles: {
-        Row: {
-          created_at: string | null
-          id: string
-          role: Database["public"]["Enums"]["app_role"]
-          user_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          role: Database["public"]["Enums"]["app_role"]
-          user_id: string
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          role?: Database["public"]["Enums"]["app_role"]
-          user_id?: string
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      has_role: {
-        Args: {
-          _role: Database["public"]["Enums"]["app_role"]
-          _user_id: string
-        }
-        Returns: boolean
-      }
+      [_ in never]: never
     }
     Enums: {
-      app_role: "owner" | "manager"
+      [_ in never]: never
     }
     CompositeTypes: {
       [_ in never]: never
@@ -274,8 +150,6 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {
-      app_role: ["owner", "manager"],
-    },
+    Enums: {},
   },
 } as const
