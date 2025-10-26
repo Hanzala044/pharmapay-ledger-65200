@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { TransactionForm } from "@/components/transactions/TransactionForm";
+import { PartyManagement } from "@/components/parties/PartyManagement";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -16,8 +17,9 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Search, Plus, Edit, Filter } from "lucide-react";
+import { Search, Plus, Edit, Filter, Users } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -204,31 +206,52 @@ export default function Parties() {
           {/* Party List */}
           <Card className="glass-card border-border/50 lg:col-span-1">
             <CardHeader>
-              <CardTitle className="text-lg">Parties</CardTitle>
-              <div className="relative mt-2">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search parties..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 glass-card border-border/50"
-                />
-              </div>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Parties
+              </CardTitle>
             </CardHeader>
-            <CardContent className="max-h-[600px] overflow-y-auto space-y-2">
-              {filteredParties.map((party) => (
-                <button
-                  key={party.id}
-                  onClick={() => setSelectedParty(party.id)}
-                  className={`w-full text-left p-3 rounded-lg transition-all ${
-                    selectedParty === party.id
-                      ? "glass-card border-primary bg-primary/10"
-                      : "glass-card border-border/50 hover:bg-accent"
-                  }`}
-                >
-                  <p className="font-medium text-sm">{party.name}</p>
-                </button>
-              ))}
+            <CardContent>
+              <Tabs defaultValue="view" className="w-full">
+                <TabsList className="grid w-full grid-cols-2 mb-4">
+                  <TabsTrigger value="view">View</TabsTrigger>
+                  <TabsTrigger value="manage">Manage</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="view" className="space-y-2">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search parties..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10 glass-card border-border/50"
+                    />
+                  </div>
+                  <div className="max-h-[500px] overflow-y-auto space-y-2 mt-4">
+                    {filteredParties.map((party) => (
+                      <button
+                        key={party.id}
+                        onClick={() => setSelectedParty(party.id)}
+                        className={`w-full text-left p-3 rounded-lg transition-all ${
+                          selectedParty === party.id
+                            ? "glass-card border-primary bg-primary/10"
+                            : "glass-card border-border/50 hover:bg-accent"
+                        }`}
+                      >
+                        <p className="font-medium text-sm">{party.name}</p>
+                      </button>
+                    ))}
+                  </div>
+                </TabsContent>
+                
+                <TabsContent value="manage">
+                  <PartyManagement 
+                    parties={parties} 
+                    onPartyChange={fetchParties}
+                  />
+                </TabsContent>
+              </Tabs>
             </CardContent>
           </Card>
 
