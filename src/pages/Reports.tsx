@@ -13,7 +13,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { FileDown, Filter } from "lucide-react";
+import { FileDown, Filter, FileSpreadsheet } from "lucide-react";
+import * as XLSX from "xlsx";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 export default function Reports() {
   const [startDate, setStartDate] = useState("");
@@ -32,8 +35,19 @@ export default function Reports() {
     if (data) setParties(data);
   };
 
-  const generateCSV = (data: any[]) => {
-    if (data.length === 0) return "";
+  const generateExcel = (data: any[]) => {
+    if (data.length === 0) return;
+
+    // Create header data
+    const headerData = [
+      ["GSTIN: 29CRIPS99400Q1ZG", "", "", "CASH/BILL", "", "", "Mob: 8095064482"],
+      ["PRADHAN MANTRI BHARATIYA JANAUSHADI KENDRA"],
+      ["BIN-NOOR CENTER BUILDING NO:G-3, 108 DOWN TOWN"],
+      ["MAIN ROAD BHATKAL-581320-DL NO: KA-KW1-172867, KA-KW1-172868"],
+      [""],
+      ["Date: " + new Date().toLocaleDateString("en-IN")],
+      [""],
+    ];
 
     const headers = [
       "Date",
@@ -43,6 +57,7 @@ export default function Reports() {
       "SGST",
       "Total",
       "Payment Type",
+      "Payment Date",
       "Status",
       "Notes",
     ];
@@ -55,25 +70,94 @@ export default function Reports() {
       Number(t.sgst).toFixed(2),
       Number(t.total).toFixed(2),
       t.payment_type,
+      t.payment_date ? new Date(t.payment_date).toLocaleDateString("en-IN") : "-",
       t.status,
       t.notes || "",
     ]);
 
-    const csvContent = [
-      headers.join(","),
-      ...rows.map((row) => row.join(",")),
-    ].join("\n");
+    // Combine all data
+    const worksheetData = [...headerData, headers, ...rows];
 
-    return csvContent;
+    const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Report");
+
+    // Generate file and download
+    XLSX.writeFile(workbook, `pharma-pay-report-${startDate}-to-${endDate}.xlsx`);
   };
 
-  const downloadReport = async () => {
+  const generatePDF = (data: any[]) => {
+    if (data.length === 0) return;
+
+    const doc = new jsPDF();
+    
+    // Add header
+    doc.setFontSize(10);
+    doc.setTextColor(128, 0, 128); // Purple color
+    
+    // First line with GSTIN and Mobile
+    doc.text("GSTIN: 29CRIPS99400Q1ZG", 14, 15);
+    doc.text("CASH/BILL", 105, 15, { align: "center" });
+    doc.text("Mob: 8095064482", 196, 15, { align: "right" });
+    
+    // Main title
+    doc.setFontSize(12);
+    doc.setFont(undefined, "bold");
+    doc.text("PRADHAN MANTRI BHARATIYA JANAUSHADI KENDRA", 105, 22, { align: "center" });
+    
+    // Address lines
+    doc.setFontSize(9);
+    doc.setFont(undefined, "normal");
+    doc.text("BIN-NOOR CENTER BUILDING NO:G-3, 108 DOWN TOWN", 105, 28, { align: "center" });
+    doc.text("MAIN ROAD BHATKAL-581320-DL NO: KA-KW1-172867, KA-KW1-172868", 105, 33, { align: "center" });
+    
+    // Date
+    doc.setTextColor(0, 0, 0);
+    doc.text(`Date: ${new Date().toLocaleDateString("en-IN")}`, 196, 40, { align: "right" });
+    
+    // Table data
+    const tableData = data.map((t) => [
+      new Date(t.date).toLocaleDateString("en-IN"),
+      t.parties?.name || "",
+      Number(t.subtotal).toFixed(2),
+      Number(t.cgst).toFixed(2),
+      Number(t.sgst).toFixed(2),
+      Number(t.total).toFixed(2),
+      t.payment_type,
+      t.payment_date ? new Date(t.payment_date).toLocaleDateString("en-IN") : "-",
+      t.status,
+      t.notes || "",
+    ]);
+
+    autoTable(doc, {
+      head: [["Date", "Party Name", "Subtotal", "CGST", "SGST", "Total", "Payment Type", "Payment Date", "Status", "Notes"]],
+      body: tableData,
+      startY: 45,
+      styles: { fontSize: 8, cellPadding: 2 },
+      headStyles: { fillColor: [128, 0, 128], textColor: 255 },
+      columnStyles: {
+        0: { cellWidth: 20 },
+        1: { cellWidth: 30 },
+        2: { cellWidth: 18 },
+        3: { cellWidth: 15 },
+        4: { cellWidth: 15 },
+        5: { cellWidth: 18 },
+        6: { cellWidth: 20 },
+        7: { cellWidth: 20 },
+        8: { cellWidth: 15 },
+        9: { cellWidth: 25 },
+      },
+    });
+
+    doc.save(`pharma-pay-report-${startDate}-to-${endDate}.pdf`);
+  };
+
+  const fetchTransactions = async () => {
     if (!startDate || !endDate) {
       toast.error("Please select both start and end dates");
-      return;
+      return null;
     }
 
-    setLoading(true);
     try {
       let query = supabase
         .from("transactions")
@@ -96,23 +180,37 @@ export default function Reports() {
 
       if (!data || data.length === 0) {
         toast.error("No transactions found for the selected criteria");
-        return;
+        return null;
       }
 
-      const csv = generateCSV(data);
-      const blob = new Blob([csv], { type: "text/csv" });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `pharma-pay-report-${startDate}-to-${endDate}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
-
-      toast.success("Report downloaded successfully!");
+      return data;
     } catch (error: any) {
-      toast.error("Failed to generate report: " + error.message);
+      toast.error("Failed to fetch transactions: " + error.message);
+      return null;
+    }
+  };
+
+  const downloadExcelReport = async () => {
+    setLoading(true);
+    try {
+      const data = await fetchTransactions();
+      if (data) {
+        generateExcel(data);
+        toast.success("Excel report downloaded successfully!");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const downloadPDFReport = async () => {
+    setLoading(true);
+    try {
+      const data = await fetchTransactions();
+      if (data) {
+        generatePDF(data);
+        toast.success("PDF report downloaded successfully!");
+      }
     } finally {
       setLoading(false);
     }
@@ -193,15 +291,25 @@ export default function Reports() {
               </Select>
             </div>
 
-            {/* Generate Button */}
-            <Button
-              onClick={downloadReport}
-              disabled={loading}
-              className="w-full bg-primary hover:bg-primary/90"
-            >
-              <FileDown className="mr-2 h-4 w-4" />
-              {loading ? "Generating..." : "Download Excel Report (CSV)"}
-            </Button>
+            {/* Generate Buttons */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Button
+                onClick={downloadExcelReport}
+                disabled={loading}
+                className="w-full bg-primary hover:bg-primary/90"
+              >
+                <FileSpreadsheet className="mr-2 h-4 w-4" />
+                {loading ? "Generating..." : "Download Excel Report"}
+              </Button>
+              <Button
+                onClick={downloadPDFReport}
+                disabled={loading}
+                className="w-full bg-secondary hover:bg-secondary/90"
+              >
+                <FileDown className="mr-2 h-4 w-4" />
+                {loading ? "Generating..." : "Download PDF Report"}
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
@@ -213,8 +321,9 @@ export default function Reports() {
                 📊 Report Information
               </h3>
               <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
-                <li>Reports are generated in CSV format (Excel-compatible)</li>
-                <li>Includes all transaction details: amounts, GST, payment type, and status</li>
+                <li>Reports are generated in Excel (.xlsx) and PDF formats</li>
+                <li>Includes all transaction details: amounts, GST, payment type, payment date, and status</li>
+                <li>Custom header with business information on all exports</li>
                 <li>Filter by date range, specific party, or payment status</li>
                 <li>Perfect for accounting, audits, and business analysis</li>
               </ul>
