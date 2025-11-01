@@ -3,7 +3,7 @@
 ## ✅ Verified Supabase Credentials
 
 Your project uses the following Supabase instance:
-- **Project URL**: `https://vklnjgljgnmirsudpquy.supabase.co`
+- **Project URL**: `https://atgazgkilvuznodbubxs.supabase.co`
 - **Status**: ✅ Connection tested and working
 
 ## 🚀 How to Set Environment Variables in Vercel
@@ -19,12 +19,12 @@ Add the following **TWO** environment variables:
 
 #### Variable 1:
 - **Key**: `VITE_SUPABASE_URL`
-- **Value**: `https://vklnjgljgnmirsudpquy.supabase.co`
+- **Value**: `https://atgazgkilvuznodbubxs.supabase.co`
 - **Environments**: Check all (Production, Preview, Development)
 
 #### Variable 2:
 - **Key**: `VITE_SUPABASE_PUBLISHABLE_KEY`
-- **Value**: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZrbG5qZ2xqZ25taXJzdWRwcXV5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEzNDcwMDksImV4cCI6MjA3NjkyMzAwOX0.qx-E44W7r93dt2rukrqL-JnFtfBBlNMnk0aA0RuhAoA`
+- **Value**: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF0Z2F6Z2tpbHZ1em5vZGJ1YnhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE0NTkzMDgsImV4cCI6MjA3NzAzNTMwOH0.EKyKcxAuY3pu17nF5Tqg5tBEznp0pI0hkDwFuQ_a7Cs`
 - **Environments**: Check all (Production, Preview, Development)
 
 ### Step 3: Redeploy
