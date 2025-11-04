@@ -4,7 +4,6 @@
 
 - Node.js 18+ installed
 - npm or yarn package manager
-- Supabase account
 
 ---
 
@@ -16,9 +15,16 @@
 npm install
 ```
 
-### 2. Configure Environment Variables
+### 2. Configure Environment
 
 Create a `.env.local` file in the project root:
+
+```bash
+# Copy the example file
+cp .env.example .env.local
+```
+
+The `.env.local` file should contain:
 
 ```env
 VITE_SUPABASE_URL=https://atgazgkilvuznodbubxs.supabase.co
@@ -53,13 +59,8 @@ Open http://localhost:8080 in your browser.
 pharmapay-ledger/
 ├── src/
 │   ├── components/       # React components
-│   │   ├── ui/          # shadcn/ui components
-│   │   ├── auth/        # Authentication components
-│   │   ├── dashboard/   # Dashboard widgets
-│   │   ├── parties/     # Party management
-│   │   └── transactions/# Transaction components
 │   ├── hooks/           # Custom React hooks
-│   ├── integrations/    # External integrations
+│   ├── integrations/    # Supabase integration
 │   │   └── supabase/    # Supabase client & types
 │   ├── lib/             # Utility functions
 │   ├── pages/           # Page components
@@ -68,10 +69,11 @@ pharmapay-ledger/
 │   ├── functions/       # Edge Functions
 │   │   ├── auth-login/  # Custom authentication
 │   │   └── setup-users/ # User setup utility
-│   └── .env.example     # Edge function env template
+│   └── setup-database.sql # Database schema
 ├── public/              # Static assets
-├── .env.example         # Frontend env template
-└── .env.local           # Your local environment (gitignored)
+├── .env.example         # Environment template
+├── .env.local           # Your credentials (gitignored)
+└── package.json         # Dependencies
 ```
 
 ---
@@ -94,49 +96,62 @@ npm run lint
 
 ---
 
-## 🗄️ Database Setup
+## 🌐 Environment Variables
 
-The application uses Supabase with the following tables:
+### Required File: `.env.local`
+
+This is the **ONLY** environment file you need. It contains all Supabase credentials.
+
+```env
+VITE_SUPABASE_URL=your_supabase_project_url
+VITE_SUPABASE_PUBLISHABLE_KEY=your_supabase_anon_key
+```
+
+### Why One File?
+
+- ✅ **Simple** - All credentials in one place
+- ✅ **Secure** - File is gitignored, never committed
+- ✅ **Deployment-friendly** - Easy to set in hosting platforms
+- ✅ **No confusion** - No multiple .env files to manage
+
+### For Deployment
+
+When deploying to platforms like Vercel, Netlify, or others:
+
+1. Add these two environment variables in your hosting dashboard:
+   - `VITE_SUPABASE_URL`
+   - `VITE_SUPABASE_PUBLISHABLE_KEY`
+
+2. Use the same values from your `.env.local` file
+
+---
+
+## 🗄️ Database
+
+The application connects to Supabase with these tables:
 
 - **parties** - Pharmaceutical business partners
 - **transactions** - Financial transactions with GST
 - **profiles** - User profile information
 - **user_roles** - Role-based access control
 
-Database is already configured and ready to use.
-
----
-
-## 🌐 Environment Files
-
-### Required Files
-
-1. **`.env.local`** (Frontend - Local Development)
-   - Contains Supabase URL and public key
-   - Used by Vite during development
-   - **Gitignored** - never commit this file
-
-2. **`supabase/.env`** (Edge Functions - Optional)
-   - Only needed if deploying edge functions
-   - Contains service role key for admin operations
-   - **Gitignored** - never commit this file
-
-### Template Files
-
-- **`.env.example`** - Template for frontend environment
-- **`supabase/.env.example`** - Template for edge functions
+Database is pre-configured and ready to use.
 
 ---
 
 ## 🔐 Security Notes
 
 ### Safe to Expose
-✅ `VITE_SUPABASE_URL` - Public Supabase project URL  
+✅ `VITE_SUPABASE_URL` - Public project URL  
 ✅ `VITE_SUPABASE_PUBLISHABLE_KEY` - Anon/public key (protected by RLS)
 
-### Never Expose
-❌ `SUPABASE_SERVICE_ROLE_KEY` - Admin key (bypasses RLS)  
-❌ `.env.local` file - Contains your credentials
+These keys are safe to use in frontend code and can be exposed in your built application.
+
+### Never Commit
+❌ `.env.local` - Contains your credentials  
+❌ `.env` - Any local environment file
+
+The `.gitignore` file already excludes these.
 
 ---
 
@@ -144,6 +159,12 @@ Database is already configured and ready to use.
 
 ### Port Already in Use
 If port 8080 is busy, Vite will automatically use the next available port (e.g., 8081).
+
+### Missing .env.local File
+```bash
+# Copy the example file
+cp .env.example .env.local
+```
 
 ### Login Fails
 1. Verify `.env.local` exists with correct credentials
@@ -153,7 +174,7 @@ If port 8080 is busy, Vite will automatically use the next available port (e.g.,
 ### Blank Page
 1. Clear browser cache
 2. Check dev server is running
-3. Verify environment variables are set
+3. Verify environment variables are set correctly
 
 ---
 
@@ -190,4 +211,9 @@ For issues or questions:
 
 ---
 
-**Ready to start!** Run `npm run dev` and open http://localhost:8080 🚀
+**Ready to start!** 
+
+1. Copy `.env.example` to `.env.local`
+2. Run `npm install`
+3. Run `npm run dev`
+4. Open http://localhost:8080 🚀

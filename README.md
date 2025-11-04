@@ -45,13 +45,17 @@
 ### Installation
 
 ```bash
-# 1. Install dependencies
+# 1. Clone the repository
+git clone <your-repo-url>
+cd pharmapay-ledger-65200
+
+# 2. Install dependencies
 npm install
 
-# 2. Create environment file
+# 3. Create environment file
 cp .env.example .env.local
 
-# 3. Start development server
+# 4. Start development server
 npm run dev
 ```
 
@@ -125,14 +129,16 @@ npm run lint     # Run ESLint
 
 ## 🔐 Environment Variables
 
-Create a `.env.local` file:
+**Single file approach** - All credentials in one place!
+
+Create a `.env.local` file (copy from `.env.example`):
 
 ```env
-VITE_SUPABASE_URL=your_supabase_url
-VITE_SUPABASE_PUBLISHABLE_KEY=your_anon_key
+VITE_SUPABASE_URL=https://atgazgkilvuznodbubxs.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=your_anon_key_here
 ```
 
-See `.env.example` for template.
+**For deployment:** Set these same variables in your hosting platform's environment settings.
 
 ---
 
